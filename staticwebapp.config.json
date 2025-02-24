@@ -16,3 +16,33 @@
     ]
   }
 }
+
+
+
+
+
+{
+  "routes": [
+    {
+      "route": "/",
+      "redirect": "https://fxcharts.blob.core.windows.net/$web/index.html",
+      "statusCode": 302
+    }
+  ],
+  "auth": {
+    "identityProviders": {
+      "azureActiveDirectory": {
+        "registration": {
+          "clientIdSettingName": "AZURE_CLIENT_ID",
+          "openIdIssuer": "https://login.microsoftonline.com/37e96f4f-82ed-4688-a652-2b096de4e630"
+        }
+      }
+    },
+    "routes": [
+      {
+        "route": "/*",
+        "allowedRoles": ["authenticated"]
+      }
+    ]
+  }
+}
