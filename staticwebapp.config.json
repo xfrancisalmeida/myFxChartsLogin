@@ -4,16 +4,22 @@
       "azureActiveDirectory": {
         "registration": {
           "clientIdSettingName": "AZURE_CLIENT_ID",
-          "openIdIssuer": "https://login.microsoftonline.com/<your-tenant-id>"
+          "openIdIssuer": "https://login.microsoftonline.com/37e96f4f-82ed-4688-a652-2b096de4e630"
         }
       }
     },
     "routes": [
       {
-        "route": "/*",
+        "route": "/app/*",
         "allowedRoles": ["authenticated"],
-        "unauthenticated_action": "RedirectToLoginPage"
+        "unauthenticatedAction": "RedirectToLoginPage"
       }
     ]
-  }
+  },
+  "routes": [
+    {
+      "route": "/",
+      "redirect": "/app/"
+    }
+  ]
 }
