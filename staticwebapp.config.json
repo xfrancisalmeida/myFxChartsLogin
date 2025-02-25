@@ -14,12 +14,5 @@
         "allowedRoles": ["authenticated"]
       }
     ]
-  },
-  "routes": [
-    {
-      "route": "/",
-      "redirect": "https://fxcharts.blob.core.windows.net/$web/index.html",
-      "statusCode": 302
-    }
-  ]
+  }
 }
