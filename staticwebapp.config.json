@@ -1,11 +1,4 @@
 {
-  "routes": [
-    {
-      "route": "/",
-      "redirect": "https://fxcharts.blob.core.windows.net/$web/index.html",
-      "statusCode": 302
-    }
-  ],
   "auth": {
     "identityProviders": {
       "azureActiveDirectory": {
