@@ -10,6 +10,11 @@
     },
     "routes": [
       {
+        "route": "/protected",
+        "allowedRoles": ["authenticated"],
+        "unauthenticatedAction": "RedirectToLoginPage"
+      },
+      {
         "route": "/*",
         "allowedRoles": ["authenticated"],
         "unauthenticatedAction": "RedirectToLoginPage"
@@ -19,6 +24,10 @@
   "routes": [
     {
       "route": "/",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/protected",
       "rewrite": "/index.html"
     },
     {
