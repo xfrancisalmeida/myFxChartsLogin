@@ -10,16 +10,11 @@
     },
     "routes": [
       {
-        "route": "/app/*",
+        "route": "/*",
         "allowedRoles": ["authenticated"],
         "unauthenticatedAction": "RedirectToLoginPage"
       }
     ]
   },
-  "routes": [
-    {
-      "route": "/",
-      "redirect": "/app/"
-    }
-  ]
+  "routes": []
 }
