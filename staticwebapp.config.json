@@ -24,15 +24,15 @@
   "routes": [
     {
       "route": "/protected",
-      "rewrite": "/app/index.html"
+      "rewrite": "/index.html"
     },
     {
       "route": "/",
-      "rewrite": "/app/index.html"
+      "rewrite": "/index.html"
     },
     {
       "route": "/*",
-      "rewrite": "/app/index.html"
+      "rewrite": "/index.html"
     }
   ]
 }
