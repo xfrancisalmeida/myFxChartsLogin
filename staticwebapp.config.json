@@ -1,4 +1,14 @@
 {
+  "routes": [
+    {
+      "route": "/login.html",
+      "allowedRoles": ["anonymous"]
+    },
+    {
+      "route": "/app.html",
+      "allowedRoles": ["authenticated"]
+    }
+  ],
   "auth": {
     "identityProviders": {
       "azureActiveDirectory": {
@@ -9,4 +19,3 @@
     }
   }
 }
-
