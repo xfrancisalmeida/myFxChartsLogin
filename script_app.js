@@ -53,23 +53,39 @@ document.getElementById("btnUpdateToken").addEventListener("click", () => {
 displayTokenExpiry();
 function displayTokenExpiry() {
   const expiryEl = document.getElementById("tokenExpiryInfo");
+  expiryEl.textContent = ""; // Clear previous
+
   const expiryDate = parseTokenExpiry(blobSasToken);
   if (!expiryDate) {
     expiryEl.textContent = "Unable to parse token expiry.";
+    expiryEl.style.color = ""; // default
     return;
   }
+
   const now = new Date();
   if (expiryDate <= now) {
     expiryEl.textContent = "Token has already expired!";
+    expiryEl.style.color = "red";
     return;
   }
+
+  // Compute difference
   const diffMs = expiryDate - now;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffHrs = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
   const diffMin = Math.floor((diffMs / (1000 * 60)) % 60);
 
-  expiryEl.textContent = `Token expires in ${diffDays} day(s), ${diffHrs} hour(s), ${diffMin} min(s).`;
+  // Show only if < 7 days remain
+  if (diffDays < 7) {
+    expiryEl.textContent = `Token expires in ${diffDays} day(s), ${diffHrs} hour(s), ${diffMin} min(s).`;
+    expiryEl.style.color = "red";
+  } else {
+    // Hide or skip entirely
+    expiryEl.textContent = "";
+    expiryEl.style.color = "";
+  }
 }
+
 
 function parseTokenExpiry(sas) {
   // Look for 'se=YYYY-MM-DDTHH:mm:ssZ'
