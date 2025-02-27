@@ -110,10 +110,15 @@ const brokerOffsetHours = 2;
 
 // Same rowConfigs as before
 const rowConfigs = [
-  { label: "AUD", symbols: ["AUDCAD","AUDCHF","AUDJPY","AUDNZD","AUDUSD","EURAUD","GBPAUD"] },
-  { label: "CAD", symbols: ["CADCHF","CADJPY","AUDCAD","EURCAD","GBPCAD","NZDCAD","USDCAD"] },
-  // etc...
-  { label: "METALS", symbols: ["XAUUSD","XAGUSD"] }
+      { label: "AUD", symbols: ["AUDCAD","AUDCHF","AUDJPY","AUDNZD","AUDUSD","EURAUD","GBPAUD"] },
+      { label: "CAD", symbols: ["CADCHF","CADJPY","AUDCAD","EURCAD","GBPCAD","NZDCAD","USDCAD"] },
+      { label: "CHF", symbols: ["CHFJPY","AUDCHF","CADCHF","EURCHF","GBPCHF","NZDCHF","USDCHF"] },
+      { label: "EUR", symbols: ["EURAUD","EURCAD","EURCHF","EURGBP","EURJPY","EURNZD","EURUSD"] },
+      { label: "GBP", symbols: ["GBPAUD","GBPCAD","GBPCHF","GBPJPY","GBPNZD","GBPUSD","EURGBP"] },
+      { label: "JPY", symbols: ["AUDJPY","CADJPY","CHFJPY","EURJPY","GBPJPY","NZDJPY","USDJPY"] },
+      { label: "NZD", symbols: ["NZDCAD","NZDCHF","NZDJPY","NZDUSD","AUDNZD","EURNZD","GBPNZD"] },
+      { label: "USD", symbols: ["USDCAD","USDCHF","USDJPY","AUDUSD","EURUSD","GBPUSD","NZDUSD"] },
+      { label: "METALS", symbols: ["XAUUSD","XAGUSD"] }
 ];
 
 // Splits lines by comma or tab
