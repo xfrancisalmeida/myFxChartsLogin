@@ -17,6 +17,16 @@
       <h1>fxCharts Dashboard</h1>
       <button id="btnLogout">Logout</button>
     </header>
+
+<!-- In your HTML, a small panel for auto‐refresh -->
+<div style="margin:20px 0;">
+  <label for="autoRefreshCheck">Auto‐Refresh:</label>
+  <input type="checkbox" id="autoRefreshCheck">
+  <label for="autoRefreshInterval">Interval (minutes):</label>
+  <input type="number" id="autoRefreshInterval" min="1" value="5" style="width:60px;">
+  <button id="btnSetRefresh">Set Refresh</button>
+</div>
+
     
     <!-- SAS Token Controls -->
     <section style="margin: 20px 0; text-align: center;">
