@@ -33,7 +33,7 @@ document.getElementById('btnLogout').addEventListener('click', () => {
  2) SAS TOKEN & BLOB FETCH LOGIC
 **************************************************************/
 // Put your existing SAS token here:
-let blobSasToken = "sp=cw&st=2025-02-24T22:15:29Z&se=2025-03-30T06:15:29Z&spr=https&sv=2022-11-02&sr=b&sig=XJ%2BMWxDIUz%2FYYoPkfENLl8eQamGwJ9zeoDYouBAUIJk%3D";
+let blobSasToken = "sp=r&st=2025-02-27T22:21:31Z&se=2025-03-30T06:21:31Z&spr=https&sv=2022-11-02&sr=b&sig=4zW%2F%2B8b1uUDg8ymjQJ4ZhHzpN59bsVMmvV4j%2B%2B0kzJw%3D";
 // Blob base URL: your CSV in the $web container
 const blobBaseUrl = "https://fxcharts.blob.core.windows.net/$web/OHLC_Snapshot.csv";
 
