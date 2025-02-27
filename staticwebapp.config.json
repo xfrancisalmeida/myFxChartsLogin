@@ -1,12 +1,12 @@
 {
   "routes": [
     {
-      "route": "/index.html",
-      "allowedRoles": ["anonymous"]
-    },
-    {
       "route": "/app.html",
       "allowedRoles": ["authenticated"]
+    },
+    {
+      "route": "/login.html",
+      "allowedRoles": ["anonymous"]
     }
   ],
   "auth": {
