@@ -1,7 +1,7 @@
 {
   "routes": [
     {
-      "route": "/login.html",
+      "route": "/index.html",
       "allowedRoles": ["anonymous"]
     },
     {
