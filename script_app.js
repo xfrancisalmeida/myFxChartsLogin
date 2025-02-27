@@ -1,28 +1,29 @@
 /**************************************************************
  1) AUTH CHECK + LOGOUT
 **************************************************************/
+// On load, confirm user is signed in via Azure SWA:
 fetch('/.auth/me')
   .then((res) => res.json())
   .then((data) => {
     if (!data.clientPrincipal) {
-      // Not logged in => go to login page
-      window.location.href = 'index.html'; // or 'login.html' if that's your file
+      // Not logged in => go to your login page
+      // (change 'login.html' to 'index.html' if that's your real login page name)
+      window.location.href = 'login.html';
       return;
     }
-    // Logged in => show main content
+    // If logged in, show main content
     document.getElementById('mainContent').style.display = 'block';
 
-    // Now safe to init CSV and chart logic
-    // (We fetch from Azure Blob using the default SAS token)
+    // Now that user is authenticated, we can safely init CSV + charts
     initCSVData();
   })
   .catch((err) => {
     console.error('Error checking auth on app.html:', err);
     // If error, also default to login
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
   });
 
-// Clicking “Logout” => call SWA’s sign-out
+// “Logout” => SWA sign-out
 document.getElementById('btnLogout').addEventListener('click', () => {
   window.location.href = '/.auth/logout';
 });
@@ -30,31 +31,25 @@ document.getElementById('btnLogout').addEventListener('click', () => {
 
 /**************************************************************
  2) SAS TOKEN & BLOB FETCH LOGIC
-   - By default, we store your SAS token here.
-   - Let the user update it at runtime if they wish.
 **************************************************************/
-
-// EXAMPLE: your existing SAS token
-//   sp=cw&st=2025-02-24T22:15:29Z&se=2025-03-30T06:15:29Z&spr=https&sv=2022-11-02&sr=b&sig=...
+// Put your existing SAS token here:
 let blobSasToken = "sp=cw&st=2025-02-24T22:15:29Z&se=2025-03-30T06:15:29Z&spr=https&sv=2022-11-02&sr=b&sig=XJ%2BMWxDIUz%2FYYoPkfENLl8eQamGwJ9zeoDYouBAUIJk%3D";
-
-// Base URL to your CSV in the $web container
+// Blob base URL: your CSV in the $web container
 const blobBaseUrl = "https://fxcharts.blob.core.windows.net/$web/OHLC_Snapshot.csv";
 
-// Update SAS token from user input & re-fetch data if needed
+// If you want the user to update the token at runtime, add an input + button in app.html
 document.getElementById("btnUpdateToken").addEventListener("click", () => {
   const inputEl = document.getElementById("sasTokenInput");
   blobSasToken = inputEl.value.trim();
   console.log("SAS token updated to:", blobSasToken);
 
-  // Re-fetch CSV data with new token (optional)
+  // Re-fetch the CSV with new token:
   initCSVData();
 
-  // Update the displayed expiry info
+  // Update displayed expiry
   displayTokenExpiry();
 });
 
-// On page load, also show how many days left for the default token
 displayTokenExpiry();
 function displayTokenExpiry() {
   const expiryEl = document.getElementById("tokenExpiryInfo");
@@ -63,14 +58,11 @@ function displayTokenExpiry() {
     expiryEl.textContent = "Unable to parse token expiry.";
     return;
   }
-
   const now = new Date();
   if (expiryDate <= now) {
     expiryEl.textContent = "Token has already expired!";
     return;
   }
-
-  // Calculate difference in ms
   const diffMs = expiryDate - now;
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffHrs = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
@@ -80,24 +72,19 @@ function displayTokenExpiry() {
 }
 
 function parseTokenExpiry(sas) {
-  // We look for 'se=YYYY-MM-DDTHH:mm:ssZ'
+  // Look for 'se=YYYY-MM-DDTHH:mm:ssZ'
   const parts = sas.split("&");
   const seParam = parts.find((p) => p.startsWith("se="));
   if (!seParam) return null;
-
   const dateStr = seParam.substring(3); // remove 'se='
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return null;
-  return d;
+  return isNaN(d.getTime()) ? null : d;
 }
 
 
 /**************************************************************
  3) FOREX DASHBOARD LOGIC
-    (Mostly unchanged, except we now fetch from Blob, not local CSV)
-***************************************************************/
-
-// Global variables
+**************************************************************/
 let rawCSVLines = [];
 let csvHeader = [];
 let newestCandleUTCms = 0;
@@ -105,19 +92,15 @@ let csvModifiedUTCms = Date.now();
 const dataBySymbol = {};
 const brokerOffsetHours = 2;
 
+// Same rowConfigs as before
 const rowConfigs = [
   { label: "AUD", symbols: ["AUDCAD","AUDCHF","AUDJPY","AUDNZD","AUDUSD","EURAUD","GBPAUD"] },
   { label: "CAD", symbols: ["CADCHF","CADJPY","AUDCAD","EURCAD","GBPCAD","NZDCAD","USDCAD"] },
-  { label: "CHF", symbols: ["CHFJPY","AUDCHF","CADCHF","EURCHF","GBPCHF","NZDCHF","USDCHF"] },
-  { label: "EUR", symbols: ["EURAUD","EURCAD","EURCHF","EURGBP","EURJPY","EURNZD","EURUSD"] },
-  { label: "GBP", symbols: ["GBPAUD","GBPCAD","GBPCHF","GBPJPY","GBPNZD","GBPUSD","EURGBP"] },
-  { label: "JPY", symbols: ["AUDJPY","CADJPY","CHFJPY","EURJPY","GBPJPY","NZDJPY","USDJPY"] },
-  { label: "NZD", symbols: ["NZDCAD","NZDCHF","NZDJPY","NZDUSD","AUDNZD","EURNZD","GBPNZD"] },
-  { label: "USD", symbols: ["USDCAD","USDCHF","USDJPY","AUDUSD","EURUSD","GBPUSD","NZDUSD"] },
+  // etc...
   { label: "METALS", symbols: ["XAUUSD","XAGUSD"] }
 ];
 
-// Helper function: split line by comma or tab
+// Splits lines by comma or tab
 function splitLine(line) {
   line = line.replace(/^\uFEFF/, '');
   if (line.indexOf(",") !== -1) return line.split(",");
@@ -126,10 +109,10 @@ function splitLine(line) {
 }
 
 /**
- * Load CSV data from Azure Blob using the current SAS token.
- * The user can override the SAS token from the input field at runtime.
+ * Load CSV data from Azure Blob using SAS token
  */
 function initCSVData() {
+  // If user updated the token in an input field, we have it in blobSasToken
   const fullUrl = `${blobBaseUrl}?${blobSasToken}`;
   console.log("Fetching CSV from:", fullUrl);
 
@@ -153,7 +136,7 @@ function initCSVData() {
           return;
         }
 
-        // Clean header
+        // Clean up header line
         csvHeader = splitLine(rawCSVLines[0]).map((h) =>
           h.trim().replace(/[^\x20-\x7E]/g, '')
         );
@@ -165,10 +148,12 @@ function initCSVData() {
       };
       reader.readAsText(blob, "UTF-8");
     })
-    .catch((err) => console.error("Error loading CSV from Blob:", err));
+    .catch((err) => {
+      console.error("Error loading CSV from Blob:", err);
+    });
 }
 
-// (Optional) The manual CSV upload will override the data from the blob
+// Optional: manual CSV upload override
 document.getElementById("csvFileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -187,7 +172,7 @@ document.getElementById("csvFileInput").addEventListener("change", (e) => {
     csvHeader = splitLine(rawCSVLines[0]).map((h) =>
       h.trim().replace(/[^\x20-\x7E]/g, '')
     );
-    console.log("CSV Header (uploaded):", csvHeader);
+    console.log("CSV Header (upload):", csvHeader);
 
     findNewestCandleInEntireCSV();
     rebuildTimeframes();
@@ -196,27 +181,19 @@ document.getElementById("csvFileInput").addEventListener("change", (e) => {
   reader.readAsText(file, "UTF-8");
 });
 
-// On timeframe or timeZone changes
-document
-  .getElementById("timeframeSelect")
-  .addEventListener("change", () => {
-    setupGrid(document.getElementById("timeframeSelect").value);
-  });
-document
-  .getElementById("timeZoneSelect")
-  .addEventListener("change", () => {
-    reParseAndRenderAll();
-  });
+// On timeframe/timeZone changes
+document.getElementById("timeframeSelect").addEventListener("change", () => {
+  setupGrid(document.getElementById("timeframeSelect").value);
+});
+document.getElementById("timeZoneSelect").addEventListener("change", () => {
+  reParseAndRenderAll();
+});
 
 // Row label click => highlight row
 document.addEventListener("click", (e) => {
   if (e.target && e.target.classList.contains("row-label")) {
-    document
-      .querySelectorAll(".row-label")
-      .forEach((lbl) => lbl.classList.remove("selected"));
-    document
-      .querySelectorAll(".chart-container")
-      .forEach((chart) => chart.classList.remove("selected"));
+    document.querySelectorAll(".row-label").forEach((lbl) => lbl.classList.remove("selected"));
+    document.querySelectorAll(".chart-container").forEach((chart) => chart.classList.remove("selected"));
     e.target.classList.add("selected");
 
     const rowCurrency = e.target.textContent.trim();
@@ -228,12 +205,12 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Find newest candle in CSV
+// Finds newest candle time from CSV
 function findNewestCandleInEntireCSV() {
   newestCandleUTCms = 0;
   const idxBar = csvHeader.indexOf("BarTime");
   if (idxBar === -1) {
-    console.warn("No BarTime column found in CSV header.");
+    console.warn("No BarTime column in CSV header.");
     return;
   }
   for (let i = 1; i < rawCSVLines.length; i++) {
@@ -289,9 +266,8 @@ function rebuildTimeframes() {
     tfSel.appendChild(opt);
   });
   tfSel.disabled = false;
-  tfSel.value = uniqueTF.has("H1")
-    ? "H1"
-    : uniqueTF.values().next().value;
+  // Choose H1 if present
+  tfSel.value = uniqueTF.has("H1") ? "H1" : uniqueTF.values().next().value;
 
   setupGrid(tfSel.value);
 }
@@ -306,11 +282,7 @@ function setupGrid(tf) {
     grid.appendChild(lbl);
 
     row.symbols.forEach((sym) => {
-      let cId =
-        "chart-" +
-        row.label.replace(/[^A-Za-z0-9]/g, "") +
-        "-" +
-        sym.replace(/[^A-Za-z0-9]/g, "");
+      let cId = "chart-" + row.label.replace(/[^A-Za-z0-9]/g, "") + "-" + sym.replace(/[^A-Za-z0-9]/g, "");
       let div = document.createElement("div");
       div.id = cId;
       div.className = "chart-container";
@@ -356,6 +328,7 @@ function reParseAndRenderAll() {
     dataBySymbol[s][t].push([chartDate, oVal, hVal, lVal, cVal]);
   }
 
+  // Render each chart container
   document.querySelectorAll(".chart-container").forEach((div) => {
     let sy = div.dataset.symbol;
     let rc = div.dataset.rowCurrency;
@@ -423,7 +396,7 @@ function renderChart(containerId, symbol, rowCurrency, timeframe) {
   let pinkColor = rootStyles.getPropertyValue("--pink-bg").trim() || "#ffcccc";
   let bgColor = greenColor;
 
-  // If row currency does NOT match symbol prefix, use pink
+  // If row currency doesn't match symbol prefix => pink
   if (
     rowCurrency.toUpperCase() !== "METALS" &&
     !symbol.toUpperCase().startsWith(rowCurrency.toUpperCase())
@@ -477,8 +450,9 @@ function decideTickFormat(tf) {
   return ["D1", "W1", "MN1"].includes(tf) ? "%d-%b" : "%H:%M";
 }
 
+
 /**************************************************************
- 4) INFO CARD LOGIC
+ 4) INFO CARDS
 **************************************************************/
 function updateInfoCards() {
   updateNewestCandleCard();
@@ -486,8 +460,7 @@ function updateInfoCards() {
   updateDataAgeCard();
   updateTimeOverviewCard();
 }
-// Periodically update data age, time info
-setInterval(updateInfoCards, 60_000);
+setInterval(updateInfoCards, 60000);
 
 function updateNewestCandleCard() {
   const el = document.getElementById("newestCandleValue");
@@ -583,8 +556,7 @@ function updateTimeOverviewCard() {
 
 function formatDDMonYYYY(dt) {
   if (!dt || isNaN(dt)) return "--";
-  const months = ["Jan","Feb","Mar","Apr","May","Jun",
-                  "Jul","Aug","Sep","Oct","Nov","Dec"];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   return (
     (dt.getUTCDate() < 10 ? "0" : "") +
     dt.getUTCDate() +
