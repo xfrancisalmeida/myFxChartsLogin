@@ -1,14 +1,5 @@
-function authenticate() {
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-
-    // Simple authentication check
-    if (username === 'user' && password === 'password') {
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
-    } else {
-        alert('Invalid username or password!');
-    }
+function loginWithGoogle() {
+    window.location.href = '/.auth/login/google';
 }
 
 // Check for Azure authentication
