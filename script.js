@@ -5,13 +5,6 @@ function loginWithMicrosoft() {
     window.location.href = msLoginUrl;
 }
 
-function loginWithGoogle() {
-    const googleLoginUrl = '/.auth/login/google';
-    console.log('Attempting to login with Google');
-    console.log('Redirecting to:', googleLoginUrl);
-    window.location.href = googleLoginUrl;
-}
-
 // Check for Azure authentication
 fetch('/.auth/me')
     .then(response => {
@@ -23,11 +16,6 @@ fetch('/.auth/me')
         if (data.clientPrincipal) {
             console.log('User is authenticated');
             console.log('Authentication Provider:', data.clientPrincipal.identityProvider);
-            if (data.clientPrincipal.identityProvider === 'google') {
-                console.log('Google login successful');
-            } else if (data.clientPrincipal.identityProvider === 'aad') {
-                console.log('Microsoft login successful');
-            }
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('content').style.display = 'block';
         } else {
