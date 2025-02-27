@@ -10,6 +10,26 @@ function loginWithGoogle() {
     console.log('Attempting to login with Google');
     console.log('Redirecting to:', googleLoginUrl);
     window.location.href = googleLoginUrl;
+
+    // Simulate successful Google login for testing
+    simulateGoogleLogin();
+}
+
+function simulateGoogleLogin() {
+    console.log('Simulating Google login...');
+    // Simulate fetching user info after successful login
+    setTimeout(() => {
+        const mockUserData = {
+            clientPrincipal: {
+                userDetails: "testuser@example.com",
+                identityProvider: "google",
+                userId: "12345"
+            }
+        };
+        console.log('Mock authentication data received:', mockUserData);
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+    }, 1000); // Simulate network delay
 }
 
 // Check for Azure authentication
@@ -22,6 +42,12 @@ fetch('/.auth/me')
         console.log('Authentication data received:', data);
         if (data.clientPrincipal) {
             console.log('User is authenticated');
+            console.log('Authentication Provider:', data.clientPrincipal.identityProvider);
+            if (data.clientPrincipal.identityProvider === 'google') {
+                console.log('Google login successful');
+            } else if (data.clientPrincipal.identityProvider === 'aad') {
+                console.log('Microsoft login successful');
+            }
             document.getElementById('auth-container').style.display = 'none';
             document.getElementById('content').style.display = 'block';
         } else {
