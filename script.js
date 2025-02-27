@@ -1,11 +1,15 @@
 function loginWithMicrosoft() {
+    const msLoginUrl = '/.auth/login/aad';
     console.log('Attempting to login with Microsoft');
-    window.location.href = '/.auth/login/aad';
+    console.log('Redirecting to:', msLoginUrl);
+    window.location.href = msLoginUrl;
 }
 
 function loginWithGoogle() {
+    const googleLoginUrl = '/.auth/login/google';
     console.log('Attempting to login with Google');
-    window.location.href = '/.auth/login/google';
+    console.log('Redirecting to:', googleLoginUrl);
+    window.location.href = googleLoginUrl;
 }
 
 // Check for Azure authentication
