@@ -11,6 +11,7 @@ on:
 
 jobs:
   build_and_deploy_job:
+    # This job runs on pushes to main or on pull requests, as long as they're not closed
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
@@ -19,21 +20,30 @@ jobs:
         with:
           submodules: true
           lfs: false
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
+          # This references the automatically generated token in your repo's Secrets
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_GRAY_POND_07D88B21E }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          
+          # Required so GitHub can make PR comments / environment checks
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+          # 'upload' indicates we are uploading static assets (rather than using the default build command)
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: "" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+
+          # Tells Azure SWA to skip the Oryx build detection step:
+          skip_app_build: true
+          
+          # Paths
+          app_location: "/"       # Where your index.html and static files live
+          api_location: ""        # If you have no Azure Functions, leave blank
+          output_location: ""     # If there's no separate "dist" or "build" folder, leave blank
 
   close_pull_request_job:
+    # This job runs if a PR is closed
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     name: Close Pull Request Job
