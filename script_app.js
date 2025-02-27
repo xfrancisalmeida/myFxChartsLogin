@@ -588,3 +588,32 @@ function formatHHMMUTC(dt) {
   let M = dt.getUTCMinutes();
   return (H < 10 ? "0" : "") + H + ":" + (M < 10 ? "0" : "") + M;
 }
+
+let refreshIntervalHandle = null;
+
+document.getElementById("btnSetRefresh").addEventListener("click", () => {
+  const isChecked = document.getElementById("autoRefreshCheck").checked;
+  const intervalStr = document.getElementById("autoRefreshInterval").value;
+  const intervalMin = parseInt(intervalStr, 10);
+
+  // Clear existing interval if any
+  if (refreshIntervalHandle) {
+    clearInterval(refreshIntervalHandle);
+    refreshIntervalHandle = null;
+  }
+
+  // If not checked or invalid interval, do nothing
+  if (!isChecked || intervalMin <= 0) {
+    console.log("Auto‐refresh disabled or invalid interval.");
+    return;
+  }
+
+  // Enable auto‐refresh
+  refreshIntervalHandle = setInterval(() => {
+    console.log(`Auto‐refresh triggered, fetching new data from Blob...`);
+    initCSVData();
+  }, intervalMin * 60_000);
+
+  console.log(`Auto‐refresh set for every ${intervalMin} minute(s).`);
+});
+
