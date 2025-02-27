@@ -10,26 +10,6 @@ function loginWithGoogle() {
     console.log('Attempting to login with Google');
     console.log('Redirecting to:', googleLoginUrl);
     window.location.href = googleLoginUrl;
-
-    // Simulate successful Google login for testing
-    simulateGoogleLogin();
-}
-
-function simulateGoogleLogin() {
-    console.log('Simulating Google login...');
-    // Simulate fetching user info after successful login
-    setTimeout(() => {
-        const mockUserData = {
-            clientPrincipal: {
-                userDetails: "testuser@example.com",
-                identityProvider: "google",
-                userId: "12345"
-            }
-        };
-        console.log('Mock authentication data received:', mockUserData);
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
-    }, 1000); // Simulate network delay
 }
 
 // Check for Azure authentication
