@@ -1,22 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>fxChartsSignIn</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>fxChartsSignIn</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Font Awesome for icons -->
+  <link 
+    rel="stylesheet" 
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" 
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer"
+  />
+  
+  <!-- Plotly Library (for the charts) -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="app">
-        <h1>fxChartsSignIn</h1>
-        <div id="auth-container">
-            <button onclick="loginWithMicrosoft()">Login with Microsoft</button>
-        </div>
-        <div id="content" style="display: none;">
-            <h2>Hello World</h2>
-            <p>Welcome to fxChartsSignIn!</p>
-        </div>
+  <div id="app">
+    <!-- Minimal “Sign In” Section -->
+    <h1>fxChartsSignIn</h1>
+    <div id="auth-container">
+      <button onclick="loginWithMicrosoft()">Login with Microsoft</button>
     </div>
-    <script src="script.js"></script>
+
+    <!-- All Forex Dashboard content stays hidden until user is authenticated -->
+    <div id="content" style="display: none;">
+      <header>
+        <h2 id="pageTitle">Forex Dashboard (24h Clocks & Column Headers)</h2>
+      </header>
+      <main>
+        <!-- Info Panel -->
+        <section class="info-panel">
+          <div class="info-card">
+            <div class="info-card-title">Newest Candle (UTC)</div>
+            <div class="info-card-value" id="newestCandleValue"></div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">CSV Modified (UTC)</div>
+            <div class="info-card-value" id="csvModifiedValue"></div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Data Age</div>
+            <div class="info-card-value" id="dataAgeValue">--</div>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title">Time Overview</div>
+            <div class="info-card-value" id="timeOverviewValue"></div>
+          </div>
+        </section>
+
+        <!-- CSV Upload Section (manual override) -->
+        <section class="upload-section">
+          <label for="csvFileInput">Choose CSV</label>
+          <input type="file" id="csvFileInput" accept=".csv" onclick="this.value=null">
+        </section>
+
+        <!-- Controls -->
+        <section class="controls-bar">
+          <div>
+            <label for="timeframeSelect">Timeframe:</label>
+            <select id="timeframeSelect" disabled>
+              <option value="">-- No Data --</option>
+            </select>
+          </div>
+          <div>
+            <label for="timeZoneSelect">Charts TZ:</label>
+            <select id="timeZoneSelect">
+              <option value="broker">Broker</option>
+              <option value="utc" selected>UTC</option>
+              <option value="local">Local</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Grid for Charts -->
+        <section id="grid-container" class="grid-container"></section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Main script that handles auth + charts -->
+  <script src="script.js"></script>
 </body>
 </html>
