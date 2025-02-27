@@ -3,14 +3,14 @@
     "identityProviders": {
       "azureActiveDirectory": {
         "registration": {
-          "openIdIssuer": "https://login.microsoftonline.com/{your-tenant-id}"
+          "openIdIssuer": "https://login.microsoftonline.com/37e96f4f-82ed-4688-a652-2b096de4e630"
         }
       },
       "customOpenIdConnectProviders": {
         "google": {
           "registration": {
-            "clientIdSettingName": "GOOGLE_CLIENT_ID",
-            "clientSecretSettingName": "GOOGLE_CLIENT_SECRET",
+            "clientIdSettingName": "218855341626-cch5alsme8f3othbr38vhn0a8ovukvbi.apps.googleusercontent.com",
+            "clientSecretSettingName": "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",
             "openIdIssuer": "https://accounts.google.com"
           },
           "login": {
