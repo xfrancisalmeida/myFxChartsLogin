@@ -1,3 +1,7 @@
+function loginWithMicrosoft() {
+    window.location.href = '/.auth/login/aad';
+}
+
 function loginWithGoogle() {
     window.location.href = '/.auth/login/google';
 }
