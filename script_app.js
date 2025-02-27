@@ -6,19 +6,20 @@ fetch('/.auth/me')
   .then((data) => {
     if (!data.clientPrincipal) {
       // Not logged in => go to login page
-      window.location.href = 'login.html';
+      window.location.href = 'index.html'; // or 'login.html' if that's your file
       return;
     }
     // Logged in => show main content
     document.getElementById('mainContent').style.display = 'block';
 
     // Now safe to init CSV and chart logic
+    // (We fetch from Azure Blob using the default SAS token)
     initCSVData();
   })
   .catch((err) => {
     console.error('Error checking auth on app.html:', err);
     // If error, also default to login
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
   });
 
 // Clicking “Logout” => call SWA’s sign-out
@@ -28,7 +29,72 @@ document.getElementById('btnLogout').addEventListener('click', () => {
 
 
 /**************************************************************
- 2) FOREX DASHBOARD LOGIC
+ 2) SAS TOKEN & BLOB FETCH LOGIC
+   - By default, we store your SAS token here.
+   - Let the user update it at runtime if they wish.
+**************************************************************/
+
+// EXAMPLE: your existing SAS token
+//   sp=cw&st=2025-02-24T22:15:29Z&se=2025-03-30T06:15:29Z&spr=https&sv=2022-11-02&sr=b&sig=...
+let blobSasToken = "sp=cw&st=2025-02-24T22:15:29Z&se=2025-03-30T06:15:29Z&spr=https&sv=2022-11-02&sr=b&sig=XJ%2BMWxDIUz%2FYYoPkfENLl8eQamGwJ9zeoDYouBAUIJk%3D";
+
+// Base URL to your CSV in the $web container
+const blobBaseUrl = "https://fxcharts.blob.core.windows.net/$web/OHLC_Snapshot.csv";
+
+// Update SAS token from user input & re-fetch data if needed
+document.getElementById("btnUpdateToken").addEventListener("click", () => {
+  const inputEl = document.getElementById("sasTokenInput");
+  blobSasToken = inputEl.value.trim();
+  console.log("SAS token updated to:", blobSasToken);
+
+  // Re-fetch CSV data with new token (optional)
+  initCSVData();
+
+  // Update the displayed expiry info
+  displayTokenExpiry();
+});
+
+// On page load, also show how many days left for the default token
+displayTokenExpiry();
+function displayTokenExpiry() {
+  const expiryEl = document.getElementById("tokenExpiryInfo");
+  const expiryDate = parseTokenExpiry(blobSasToken);
+  if (!expiryDate) {
+    expiryEl.textContent = "Unable to parse token expiry.";
+    return;
+  }
+
+  const now = new Date();
+  if (expiryDate <= now) {
+    expiryEl.textContent = "Token has already expired!";
+    return;
+  }
+
+  // Calculate difference in ms
+  const diffMs = expiryDate - now;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHrs = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+  const diffMin = Math.floor((diffMs / (1000 * 60)) % 60);
+
+  expiryEl.textContent = `Token expires in ${diffDays} day(s), ${diffHrs} hour(s), ${diffMin} min(s).`;
+}
+
+function parseTokenExpiry(sas) {
+  // We look for 'se=YYYY-MM-DDTHH:mm:ssZ'
+  const parts = sas.split("&");
+  const seParam = parts.find((p) => p.startsWith("se="));
+  if (!seParam) return null;
+
+  const dateStr = seParam.substring(3); // remove 'se='
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return d;
+}
+
+
+/**************************************************************
+ 3) FOREX DASHBOARD LOGIC
+    (Mostly unchanged, except we now fetch from Blob, not local CSV)
 ***************************************************************/
 
 // Global variables
@@ -38,6 +104,7 @@ let newestCandleUTCms = 0;
 let csvModifiedUTCms = Date.now();
 const dataBySymbol = {};
 const brokerOffsetHours = 2;
+
 const rowConfigs = [
   { label: "AUD", symbols: ["AUDCAD","AUDCHF","AUDJPY","AUDNZD","AUDUSD","EURAUD","GBPAUD"] },
   { label: "CAD", symbols: ["CADCHF","CADJPY","AUDCAD","EURCAD","GBPCAD","NZDCAD","USDCAD"] },
@@ -58,19 +125,31 @@ function splitLine(line) {
   return [line];
 }
 
-// Load CSV data from OHLC_Snapshot.csv via fetch
+/**
+ * Load CSV data from Azure Blob using the current SAS token.
+ * The user can override the SAS token from the input field at runtime.
+ */
 function initCSVData() {
-  fetch('OHLC_Snapshot.csv')
-    .then((res) => res.blob())
+  const fullUrl = `${blobBaseUrl}?${blobSasToken}`;
+  console.log("Fetching CSV from:", fullUrl);
+
+  fetch(fullUrl)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Blob fetch failed. Status: ${res.status}`);
+      }
+      return res.blob();
+    })
     .then((blob) => {
+      csvModifiedUTCms = Date.now();
+
       const reader = new FileReader();
       reader.onload = (evt) => {
         const text = evt.target.result;
         rawCSVLines = text.split(/\r?\n/).filter((x) => x.trim());
-        csvModifiedUTCms = Date.now();
 
         if (rawCSVLines.length < 2) {
-          console.warn("CSV has too few lines");
+          console.warn("CSV has too few lines or is empty");
           return;
         }
 
@@ -78,16 +157,18 @@ function initCSVData() {
         csvHeader = splitLine(rawCSVLines[0]).map((h) =>
           h.trim().replace(/[^\x20-\x7E]/g, '')
         );
+        console.log("CSV Header from Blob:", csvHeader);
+
         findNewestCandleInEntireCSV();
         rebuildTimeframes();
         updateInfoCards();
       };
       reader.readAsText(blob, "UTF-8");
     })
-    .catch((err) => console.error("Error loading CSV:", err));
+    .catch((err) => console.error("Error loading CSV from Blob:", err));
 }
 
-// CSV Upload Handler
+// (Optional) The manual CSV upload will override the data from the blob
 document.getElementById("csvFileInput").addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -106,6 +187,8 @@ document.getElementById("csvFileInput").addEventListener("change", (e) => {
     csvHeader = splitLine(rawCSVLines[0]).map((h) =>
       h.trim().replace(/[^\x20-\x7E]/g, '')
     );
+    console.log("CSV Header (uploaded):", csvHeader);
+
     findNewestCandleInEntireCSV();
     rebuildTimeframes();
     updateInfoCards();
@@ -150,7 +233,7 @@ function findNewestCandleInEntireCSV() {
   newestCandleUTCms = 0;
   const idxBar = csvHeader.indexOf("BarTime");
   if (idxBar === -1) {
-    console.warn("No BarTime column");
+    console.warn("No BarTime column found in CSV header.");
     return;
   }
   for (let i = 1; i < rawCSVLines.length; i++) {
@@ -182,7 +265,7 @@ function rebuildTimeframes() {
   const idxSymbol = csvHeader.indexOf("Symbol");
   const idxTF = csvHeader.indexOf("Timeframe");
   if (idxSymbol === -1 || idxTF === -1) {
-    console.warn("No Symbol/Timeframe columns");
+    console.warn("No Symbol/Timeframe columns in CSV.");
     return;
   }
   const uniqueTF = new Set();
@@ -394,13 +477,15 @@ function decideTickFormat(tf) {
   return ["D1", "W1", "MN1"].includes(tf) ? "%d-%b" : "%H:%M";
 }
 
+/**************************************************************
+ 4) INFO CARD LOGIC
+**************************************************************/
 function updateInfoCards() {
   updateNewestCandleCard();
   updateCSVModifiedCard();
   updateDataAgeCard();
   updateTimeOverviewCard();
 }
-
 // Periodically update data age, time info
 setInterval(updateInfoCards, 60_000);
 
@@ -498,20 +583,8 @@ function updateTimeOverviewCard() {
 
 function formatDDMonYYYY(dt) {
   if (!dt || isNaN(dt)) return "--";
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec"
-  ];
+  const months = ["Jan","Feb","Mar","Apr","May","Jun",
+                  "Jul","Aug","Sep","Oct","Nov","Dec"];
   return (
     (dt.getUTCDate() < 10 ? "0" : "") +
     dt.getUTCDate() +
