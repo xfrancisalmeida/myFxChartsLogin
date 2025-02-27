@@ -17,6 +17,18 @@
       <h1>fxCharts Dashboard</h1>
       <button id="btnLogout">Logout</button>
     </header>
+    
+    <!-- SAS Token Controls -->
+    <section style="margin: 20px 0; text-align: center;">
+      <label for="sasTokenInput">SAS Token:</label>
+      <input type="text" id="sasTokenInput" size="80" />
+      <button id="btnUpdateToken">Update Token</button>
+
+      <!-- Show time until expiration here -->
+      <div id="tokenExpiryInfo" style="margin-top: 8px; font-style: italic;">
+        <!-- e.g. "Token expires in 5 day(s), 3 hour(s), 20 min(s)." -->
+      </div>
+    </section>
 
     <!-- Main content is hidden until auth check completes -->
     <main id="mainContent" style="display: none;">
