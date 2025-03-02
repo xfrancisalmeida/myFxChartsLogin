@@ -121,19 +121,33 @@ const rowConfigs = [
       { label: "METALS", symbols: ["XAUUSD","XAGUSD"] }
 ];
 
-// Splits lines by comma or tab
+let detectedDelimiter = ","; // Default to comma
+
+// Detect delimiter from the first line of the CSV
+function detectDelimiter(line) {
+  const possibleDelimiters = [",", "\t", ";", "|"]; // Common delimiters
+  let delimiterCounts = {};
+
+  // Count occurrences of each delimiter
+  possibleDelimiters.forEach(delim => {
+    delimiterCounts[delim] = (line.match(new RegExp(`\\${delim}`, "g")) || []).length;
+  });
+
+  // Select the most frequent delimiter
+  return Object.entries(delimiterCounts).reduce((a, b) => (a[1] > b[1] ? a : b), ["", 0])[0] || ",";
+}
+
+// Splits lines using the detected delimiter
 function splitLine(line) {
-  line = line.replace(/^\uFEFF/, '');
-  if (line.indexOf(",") !== -1) return line.split(",");
-  if (line.indexOf("\t") !== -1) return line.split("\t");
-  return [line];
+  line = line.replace(/^\uFEFF/, ''); // Remove BOM if present
+  return line.split(detectedDelimiter);
 }
 
 /**
  * Load CSV data from Azure Blob using SAS token
  */
+// Inside initCSVData(), update where we parse the first line:
 function initCSVData() {
-  // If user updated the token in an input field, we have it in blobSasToken
   const fullUrl = `${blobBaseUrl}?${blobSasToken}`;
   console.log("Fetching CSV from:", fullUrl);
 
@@ -157,11 +171,15 @@ function initCSVData() {
           return;
         }
 
-        // Clean up header line
+        // Detect delimiter from the first row
+        detectedDelimiter = detectDelimiter(rawCSVLines[0]);
+
+        // Process header
         csvHeader = splitLine(rawCSVLines[0]).map((h) =>
           h.trim().replace(/[^\x20-\x7E]/g, '')
         );
         console.log("CSV Header from Blob:", csvHeader);
+        console.log("Detected delimiter:", detectedDelimiter);
 
         findNewestCandleInEntireCSV();
         rebuildTimeframes();
